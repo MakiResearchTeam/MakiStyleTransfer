@@ -1,6 +1,6 @@
 from makiflow.layers import *
 from makiflow.models import Classificator
-
+from .utils import InputLayer_mod
 
 def create_model_vgg16(input_shape, xinp=None, mode='Network', number_of_layers=15):
     assert number_of_layers > 2 or number_of_layers < 19
