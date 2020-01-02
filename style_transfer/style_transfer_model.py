@@ -148,6 +148,6 @@ class StyleTransferModel:
         img = img.reshape(img.shape[1], img.shape[2], img.shape[3]).astype(np.float32)
         img = unpreprocess_vgg(img)
         if use_scale:
-            return clip_image(scale_img(img) * 255).astype(np.uint8)
+            return clip_image(scale_img(img) * 255)
         else:
-            return clip_image(img).astype(np.uint8)
+            return clip_image(img)
