@@ -13,14 +13,14 @@ class StyleTransferModel:
         self._content_img = read_image(path_to_content_img, image_size)
         self._final_img = None
 
-        self._norm_style_img = preprocess_input_vgg(self._style_img)
-        self._norm_content_img = preprocess_input_vgg(self._content_img)
+        input_shape = (1, image_size[0], image_size[1], 3)
+        self._norm_style_img = preprocess_input_vgg(self._style_img).reshape(*input_shape)
+        self._norm_content_img = preprocess_input_vgg(self._content_img).reshape(*input_shape)
 
         self._ses = None
         self._opt = None
         self._use_bfgs = None
 
-        input_shape = (1, image_size[0], image_size[1], 3)
         self.__update_session()
         self.__count_targets(nb_layers, path_to_weights, input_shape)
         self.__build_final_loss(nb_layers, path_to_weights, input_shape, alpha, beta)
