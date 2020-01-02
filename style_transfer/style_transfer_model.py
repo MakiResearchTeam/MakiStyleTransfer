@@ -2,7 +2,7 @@ import tensorflow as tf
 import numpy as np
 
 from .model_builder import create_model_vgg16
-from .utils import read_image, preprocess_input_vgg, unpreprocess_vgg, scale_img, style_loss, get_bfgs, update
+from .utils import read_image, preprocess_input_vgg, unpreprocess_vgg, scale_img, style_loss, get_bfgs, update, clip_image
 
 class StyleTransferModel:
 
@@ -143,5 +143,11 @@ class StyleTransferModel:
                 ls = self._ses.run(self._loss)
                 print(f'Loss in epochs {i+1} is {ls}')
 
-    def get_result(self):
-        return self._ses.run(self._model.get_node('Input').get_data_tensor())
+    def get_result(self, use_scale=False):
+        img = self._ses.run(self._model.get_node('Input').get_data_tensor())
+        img = img.reshape(img.shape[1], img.shape[2], img.shape[3]).astype(np.float32)
+        img = unpreprocess_vgg(img)
+        if use_scale:
+            return clip_image(scale_img(img) * 255).astype(np.uint8)
+        else:
+            return clip_image(img).astype(np.uint8)
