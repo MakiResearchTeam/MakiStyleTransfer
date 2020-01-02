@@ -62,7 +62,8 @@ class StyleTransferModel:
         self.__update_session()
 
     def __build_final_loss(self,nb_layers, path_to_weights, input_shape, alpha, beta):
-        x = np.random.randn(np.prod(input_shape))
+        x = np.random.randn(np.prod(input_shape)).reshape(input_shape).astype(np.float32)
+        
         model, in_x, output, names, outputs = self.__build_model_and_load_weights(nb_layers,
                                                                                   path_to_weights,
                                                                                   input_shape,
