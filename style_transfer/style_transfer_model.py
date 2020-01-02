@@ -63,7 +63,7 @@ class StyleTransferModel:
 
     def __build_final_loss(self,nb_layers, path_to_weights, input_shape, alpha, beta):
         x = np.random.randn(np.prod(input_shape)).reshape(input_shape).astype(np.float32)
-        
+
         model, in_x, output, names, outputs = self.__build_model_and_load_weights(nb_layers,
                                                                                   path_to_weights,
                                                                                   input_shape,
@@ -88,7 +88,7 @@ class StyleTransferModel:
         self._loss = None
 
         # Build content loss
-        for i,sym, act in enumerate(zip(outputs,self._content_target)):
+        for i, (sym, act) in enumerate(zip(outputs,self._content_target)):
             temp_answer = tf.reduce_mean(tf.square(sym.get_data_tensor() - act))
 
             if type(alpha) is list:
@@ -102,7 +102,7 @@ class StyleTransferModel:
                 self._loss += temp_answer
 
         # Build style loss
-        for i,sym, act in enumerate(zip(outputs,self._style_target)):
+        for i, (sym, act) in enumerate(zip(outputs,self._style_target)):
             temp_answer = style_loss(sym.get_data_tensor()[0], act[0])
 
             if type(beta) is list:
