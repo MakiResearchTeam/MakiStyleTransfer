@@ -6,7 +6,7 @@ from .utils import read_image, preprocess_input_vgg, unpreprocess_vgg, scale_img
 
 class StyleTransferModel:
 
-    def __init__(self, alpha, beta, input_shape, path_to_weights, path_to_style_img,
+    def __init__(self, alpha, beta, path_to_weights, path_to_style_img,
                  path_to_content_img, image_size=(300,300), nb_layers=15):
         # alpha - for content, beta - for style, input_shape = (1,300,300,3)
         self._style_img = read_image(path_to_style_img, image_size)
@@ -20,6 +20,7 @@ class StyleTransferModel:
         self._opt = None
         self._use_bfgs = None
 
+        input_shape = (1, image_size[0], image_size[1], 3)
         self.__update_session()
         self.__count_targets(nb_layers, path_to_weights, input_shape)
         self.__build_final_loss(nb_layers, path_to_weights, input_shape, alpha, beta)
@@ -29,9 +30,9 @@ class StyleTransferModel:
             self._ses.close()
         self._ses = tf.Session()
 
-    def __build_model_and_load_weights(self,nb_layers, path_to_weights, input_shape, type):
+    def __build_model_and_load_weights(self,nb_layers, path_to_weights, input_shape, type, xinp=None):
         model, in_x, output, names, outputs = create_model_vgg16(input_shape,
-                                                                 xinp=None,
+                                                                 xinp=xinp,
                                                                  mode=type,
                                                                  number_of_layers=nb_layers
         )
@@ -61,10 +62,12 @@ class StyleTransferModel:
         self.__update_session()
 
     def __build_final_loss(self,nb_layers, path_to_weights, input_shape, alpha, beta):
+        x = np.random.randn(np.prod(input_shape))
         model, in_x, output, names, outputs = self.__build_model_and_load_weights(nb_layers,
                                                                                   path_to_weights,
                                                                                   input_shape,
-                                                                                  'Style'
+                                                                                  'Style',
+                                                                                   xinp=x
         )
         self._model = model
 
@@ -139,3 +142,5 @@ class StyleTransferModel:
                 ls = self._ses.run(self._loss)
                 print(f'Loss in epochs {i+1} is {ls}')
 
+    def get_result(self):
+        return self._ses.run(self._model.get_node('Input').get_data_tensor())
