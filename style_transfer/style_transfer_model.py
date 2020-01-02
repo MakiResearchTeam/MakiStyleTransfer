@@ -14,8 +14,8 @@ class StyleTransferModel:
         self._final_img = None
 
         input_shape = (1, image_size[0], image_size[1], 3)
-        self._norm_style_img = preprocess_input_vgg(self._style_img).reshape(*input_shape)
-        self._norm_content_img = preprocess_input_vgg(self._content_img).reshape(*input_shape)
+        self._norm_style_img = preprocess_input_vgg(self._style_img).reshape(input_shape)
+        self._norm_content_img = preprocess_input_vgg(self._content_img).reshape(input_shape)
 
         self._ses = None
         self._opt = None
