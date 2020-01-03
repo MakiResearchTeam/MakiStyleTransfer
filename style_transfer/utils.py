@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
 from makiflow.base import MakiLayer, MakiTensor
+from skimage.io import imsave
 import cv2
 
 
@@ -39,6 +40,15 @@ def read_image(path, size=(300,300)):
 
     img = cv2.resize(img, size).astype(np.int32)
     return img
+
+
+def save_image(path, image):
+    imsave(path + 'result.jpg', image)
+
+
+def resize_image(image, size=(300,300), interpolation=cv2.INTER_CUBIC):
+    return cv2.resize(image, size, interpolation=interpolation)
+
 
 # Function to print loss
 def update(l):

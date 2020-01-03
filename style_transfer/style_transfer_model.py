@@ -1,8 +1,10 @@
 import tensorflow as tf
 import numpy as np
 
+
 from .model_builder import create_model_vgg16
-from .utils import read_image, preprocess_input_vgg, unpreprocess_vgg, scale_img, style_loss, get_bfgs, update, clip_image
+from .utils import read_image, preprocess_input_vgg, unpreprocess_vgg, scale_img, style_loss,\
+    get_bfgs, update, clip_image, save_image, resize_image
 
 class StyleTransferModel:
 
@@ -151,3 +153,12 @@ class StyleTransferModel:
             return clip_image(scale_img(img) * 255)
         else:
             return clip_image(img)
+
+    def save_result_as_image(self, path='', size=None):
+        result = self.get_result()
+
+        if size is not None:
+            result = resize_image(result, size)
+        save_image(path, result)
+        print('Image is saved as result.jpg')
+
