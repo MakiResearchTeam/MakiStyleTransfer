@@ -4,11 +4,11 @@ import numpy as np
 
 from .model_builder import create_model_vgg16
 from .utils import read_image, preprocess_input_vgg, unpreprocess_vgg, scale_img, style_loss,\
-    get_bfgs, update, clip_image, save_image, resize_image
+    get_bfgs, update, clip_image, save_image, resize_image, total_variation_loss
 
 class StyleTransferModel:
 
-    def __init__(self, alpha, beta, path_to_weights, path_to_style_img,
+    def __init__(self, alpha, beta, total_variation_weight, path_to_weights, path_to_style_img,
                  path_to_content_img, image_size=(300,300), nb_layers=15):
         # alpha - for content, beta - for style, input_shape = (1,300,300,3)
         self._style_img = read_image(path_to_style_img, image_size)
@@ -22,10 +22,11 @@ class StyleTransferModel:
         self._ses = None
         self._opt = None
         self._use_bfgs = None
+        self._in_x = None
 
         self.__update_session()
         self.__count_targets(nb_layers, path_to_weights, input_shape)
-        self.__build_final_loss(nb_layers, path_to_weights, input_shape, alpha, beta)
+        self.__build_final_loss(nb_layers, path_to_weights, input_shape, alpha, beta, total_variation_weight)
 
     def __update_session(self):
         if self._ses is not None:
@@ -63,9 +64,8 @@ class StyleTransferModel:
 
         self.__update_session()
 
-    def __build_final_loss(self,nb_layers, path_to_weights, input_shape, alpha, beta):
+    def __build_final_loss(self,nb_layers, path_to_weights, input_shape, alpha, beta, total_variation_weight):
         x = np.random.randn(np.prod(input_shape)).reshape(input_shape).astype(np.float32)
-
         model, in_x, output, names, outputs = self.__build_model_and_load_weights(nb_layers,
                                                                                   path_to_weights,
                                                                                   input_shape,
@@ -73,6 +73,10 @@ class StyleTransferModel:
                                                                                    xinp=x
         )
         self._model = model
+        if self._in_x is not None:
+            in_x = self._in_x
+        else:
+            self._in_x = in_x
 
         if type(alpha) is list and len(alpha) != len(outputs):
             raise ValueError('number of alpha and output layers have different sizes')
@@ -83,6 +87,8 @@ class StyleTransferModel:
         self._alpha = tf.constant(alpha, dtype=np.float32)
 
         self._beta = tf.constant(beta, dtype=np.float32)
+
+        self._total_variation_weight = tf.constant(total_variation_weight, dtype=np.float32)
 
         self._content_target = [tf.Variable(target) for target in self._content_target]
         self._style_target = [tf.Variable(target) for target in self._style_target]
@@ -113,6 +119,9 @@ class StyleTransferModel:
                 temp_answer = temp_answer * self._beta
 
             self._loss += temp_answer
+
+        # The total variation loss
+        self._loss += total_variation_loss(in_x.get_data_tensor())
 
         # Initialize variables
         self._ses.run(tf.variables_initializer(

@@ -9,6 +9,18 @@ def clip_image(x):
     return np.clip(x, 0, 255).astype(np.uint8)
 
 
+def high_pass_x_y(image):
+  x_var = image[:,:,1:,:] - image[:,:,:-1,:]
+  y_var = image[:,1:,:,:] - image[:,:-1,:,:]
+
+  return x_var, y_var
+
+
+def total_variation_loss(image):
+  x_deltas, y_deltas = high_pass_x_y(image)
+  return tf.reduce_sum(tf.abs(x_deltas)) + tf.reduce_sum(tf.abs(y_deltas))
+
+
 def unpreprocess_vgg(x):
     x[..., 0] = x[..., 0] + 103.939
     x[..., 1] = x[..., 1] + 116.779
