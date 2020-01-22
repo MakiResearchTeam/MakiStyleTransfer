@@ -100,9 +100,9 @@ class StyleTransferModel:
             temp_answer = tf.reduce_mean(tf.square(sym.get_data_tensor() - act))
 
             if type(alpha) is list:
-                temp_answer = temp_answer * self._alpha[i]
+                temp_answer = temp_answer * self._alpha[i] / tf.constant(len(outputs), dtype=np.float32)
             else:
-                temp_answer = temp_answer * self._alpha
+                temp_answer = temp_answer * self._alpha / tf.constant(len(outputs), dtype=np.float32)
 
             if self._loss is None:
                 self._loss = temp_answer
@@ -114,9 +114,9 @@ class StyleTransferModel:
             temp_answer = style_loss(sym.get_data_tensor()[0], act[0])
 
             if type(beta) is list:
-                temp_answer = temp_answer * self._beta[i]
+                temp_answer = temp_answer * self._beta[i] / tf.constant(len(outputs), dtype=np.float32)
             else:
-                temp_answer = temp_answer * self._beta
+                temp_answer = temp_answer * self._beta / tf.constant(len(outputs), dtype=np.float32)
 
             self._loss += temp_answer
 
@@ -134,13 +134,14 @@ class StyleTransferModel:
             ]
         ))
 
-    def compile_optimizer(self, optimizer='L-BFGS-B'):
+    def compile_optimizer(self, optimizer='L-BFGS-B', lr=0.02):
         self._opt = None
 
         if optimizer == 'L-BFGS-B':
             self._use_bfgs = True
         else:
             self._use_bfgs = False
+            optimizer = self.get_adam(lr)
             self._opt = optimizer.minimize(self._loss, var_list=[self._model.get_node('Input').get_data_tensor()])
             self._ses.run(tf.variables_initializer(optimizer.variables()))
 
@@ -170,4 +171,12 @@ class StyleTransferModel:
             result = resize_image(result, size)
         save_image(path, result)
         print('Image is saved as result.jpg')
+
+    def get_adam(self, lr=0.02):
+      opt = tf.optimizers.Adam(learning_rate=lr, beta_1=0.99, epsilon=1e-1)
+      minimize = opt.minimize(self._loss, var_list=[self._in_x.get_data_tensor()])
+      self._ses.run(tf.variables_initializer(opt.variables()))
+
+      return minimize
+
 

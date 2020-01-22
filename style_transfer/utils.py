@@ -139,8 +139,3 @@ def get_bfgs(loss, in_x, epochs):
                                                 var_to_bounds=(-127,127)
   )
 
-def get_sgd():
-  opt = tf.train.MomentumOptimizer(1000, momentum=0.0, use_nesterov=False)
-  minimize =  opt.minimize(loss, var_list=[in_x.get_data_tensor()])
-  ses.run(tf.variables_initializer(opt.variables()))
-  return minimize
