@@ -173,7 +173,7 @@ class StyleTransferModel:
         print('Image is saved as result.jpg')
 
     def get_adam(self, lr=0.02):
-      opt = tf.optimizers.Adam(learning_rate=lr, beta_1=0.99, epsilon=1e-1)
+      opt = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.99, epsilon=1e-1)
       minimize = opt.minimize(self._loss, var_list=[self._in_x.get_data_tensor()])
       self._ses.run(tf.variables_initializer(opt.variables()))
 
