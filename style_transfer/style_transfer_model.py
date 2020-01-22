@@ -100,9 +100,9 @@ class StyleTransferModel:
             temp_answer = tf.reduce_mean(tf.square(sym.get_data_tensor() - act))
 
             if type(alpha) is list:
-                temp_answer = temp_answer * self._alpha[i] / tf.constant(len(outputs), dtype=np.float32)
+                temp_answer = temp_answer * self._alpha[i]
             else:
-                temp_answer = temp_answer * self._alpha / tf.constant(len(outputs), dtype=np.float32)
+                temp_answer = temp_answer * self._alpha
 
             if self._loss is None:
                 self._loss = temp_answer
@@ -114,9 +114,9 @@ class StyleTransferModel:
             temp_answer = style_loss(sym.get_data_tensor()[0], act[0])
 
             if type(beta) is list:
-                temp_answer = temp_answer * self._beta[i] / tf.constant(len(outputs), dtype=np.float32)
+                temp_answer = temp_answer * self._beta[i]
             else:
-                temp_answer = temp_answer * self._beta / tf.constant(len(outputs), dtype=np.float32)
+                temp_answer = temp_answer * self._beta
 
             self._loss += temp_answer
 
