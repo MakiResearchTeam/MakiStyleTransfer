@@ -141,9 +141,7 @@ class StyleTransferModel:
             self._use_bfgs = True
         else:
             self._use_bfgs = False
-            optimizer = self.get_adam(lr)
-            self._opt = optimizer.minimize(self._loss, var_list=[self._model.get_node('Input').get_data_tensor()])
-            self._ses.run(tf.variables_initializer(optimizer.variables()))
+            self._opt = self.get_adam(lr)
 
     def fit_style_transfer(self, epochs):
         if self._use_bfgs:
@@ -176,7 +174,6 @@ class StyleTransferModel:
       opt = tf.train.AdamOptimizer(learning_rate=lr, beta1=0.99, epsilon=1e-1)
       minimize = opt.minimize(self._loss, var_list=[self._in_x.get_data_tensor()])
       self._ses.run(tf.variables_initializer(opt.variables()))
-
       return minimize
 
 
