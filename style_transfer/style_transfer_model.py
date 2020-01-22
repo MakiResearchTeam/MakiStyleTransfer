@@ -121,7 +121,7 @@ class StyleTransferModel:
             self._loss += temp_answer
 
         # The total variation loss
-        self._loss += total_variation_loss(in_x.get_data_tensor())
+        self._loss += total_variation_loss(in_x.get_data_tensor()) * self._total_variation_weight
 
         # Initialize variables
         self._ses.run(tf.variables_initializer(
