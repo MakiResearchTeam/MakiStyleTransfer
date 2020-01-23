@@ -9,7 +9,7 @@ from .utils import read_image, preprocess_input_vgg, unpreprocess_vgg, scale_img
 class StyleTransferModel:
 
     def __init__(self, alpha, beta, total_variation_weight, path_to_weights, path_to_style_img,
-                 path_to_content_img, image_size=(300,300), nb_layers=15):
+                 path_to_content_img, image_size=(300,300), nb_layers=15, set_content_as_input=False):
         # alpha - for content, beta - for style, input_shape = (1,300,300,3)
         self._style_img = read_image(path_to_style_img, image_size)
         self._content_img = read_image(path_to_content_img, image_size)
@@ -26,7 +26,8 @@ class StyleTransferModel:
 
         self.__update_session()
         self.__count_targets(nb_layers, path_to_weights, input_shape)
-        self.__build_final_loss(nb_layers, path_to_weights, input_shape, alpha, beta, total_variation_weight)
+        self.__build_final_loss(nb_layers, path_to_weights, input_shape, alpha, beta,
+                                total_variation_weight, set_content_as_input)
 
     def __update_session(self):
         if self._ses is not None:
@@ -62,21 +63,32 @@ class StyleTransferModel:
                 feed_dict={in_x.get_data_tensor(): self._norm_style_img}).astype(np.float32) for out in outputs
         ]
 
-        self.__update_session()
 
-    def __build_final_loss(self,nb_layers, path_to_weights, input_shape, alpha, beta, total_variation_weight):
-        x = np.random.randn(np.prod(input_shape)).reshape(input_shape).astype(np.float32)
-        model, in_x, output, names, outputs = self.__build_model_and_load_weights(nb_layers,
-                                                                                  path_to_weights,
-                                                                                  input_shape,
-                                                                                  'Style',
-                                                                                   xinp=x
-        )
-        self._model = model
-        if self._in_x is not None:
-            in_x = self._in_x
+    def __build_final_loss(self,nb_layers, path_to_weights, input_shape, alpha, beta,
+                           total_variation_weight, set_content_as_input, build_model=True):
+        if set_content_as_input:
+            x = self._norm_content_img
         else:
+            x = np.random.randn(np.prod(input_shape)).reshape(input_shape).astype(np.float32)
+
+        if build_model:
+            model, in_x, output, names, outputs = self.__build_model_and_load_weights(nb_layers,
+                                                                                      path_to_weights,
+                                                                                      input_shape,
+                                                                                      'Style',
+                                                                                       xinp=x
+            )
+            self._model = model
             self._in_x = in_x
+            self._outputs = outputs
+            self._output = output
+            self._names = names
+        else:
+            model = self._model
+            in_x = self._in_x
+            outputs = self._outputs
+            output = self._output
+            names = self._names
 
         if type(alpha) is list and len(alpha) != len(outputs):
             raise ValueError('number of alpha and output layers have different sizes')
@@ -121,7 +133,7 @@ class StyleTransferModel:
             self._loss += temp_answer
 
         # The total variation loss
-        self._loss += total_variation_loss(in_x.get_data_tensor()) * self._total_variation_weight
+        self._loss += total_variation_loss(self._in_x.get_data_tensor()) * self._total_variation_weight
 
         # Initialize variables
         self._ses.run(tf.variables_initializer(
